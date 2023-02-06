@@ -47,6 +47,10 @@ watchEffect(() => {
     router.push('/')
   }
 })
+
+definePageMeta({
+  layout: 'login'
+})
 </script>
 <template>
   <v-card

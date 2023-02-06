@@ -10,7 +10,7 @@ definePageMeta({
         width="400"
         title="This is a title"
         subtitle="This is a subtitle"
-        text="This is content"
+        text="This is users"
       ></v-card>
   </div>
 </template>
