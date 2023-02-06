@@ -30,9 +30,10 @@ export default defineEventHandler( async (event) => {
     return data as MenuOption[];
   }catch(err) {
     console.error(`Error at ${event.path}. ${err}`);
+    
     const error = createError({
       statusCode: 500,
-      statusMessage: 'Unhandled exception' + {err},
+      statusMessage: `Unhandled exception: ${JSON.stringify(err)}`,
     });
     sendError(event, error, false);
   }
