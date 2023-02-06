@@ -32,7 +32,7 @@ export default defineEventHandler( async (event) => {
     console.error(`Error at ${event.path}. ${err}`);
     const error = createError({
       statusCode: 500,
-      statusMessage: 'Unhandled exception',
+      statusMessage: 'Unhandled exception' + {err},
     });
     sendError(event, error, false);
   }
