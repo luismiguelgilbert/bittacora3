@@ -5,6 +5,19 @@ const router = useRouter()
 
 const email = ref('luismiguelgilbert@gmail.com')
 const password = ref('mypassword.2020')
+const isErrorVisible = ref(false)
+const errorMessage = ref('')
+const isPwdVisible = ref(false)
+const isPwdVisibleIcon = computed(() => {
+  return isPwdVisible.value ? 'fas fa-eye-slash' : 'fas fa-eye'
+}) 
+const isPwdVisibleType = computed(() => {
+  return isPwdVisible.value ? 'text' : 'password'
+}) 
+const togglePwdVisibility = () => {
+  isPwdVisible.value = !isPwdVisible.value
+}
+
 const errorMsg = ref<unknown>(null)
 
 const userLogin = async () => {
@@ -16,10 +29,13 @@ const userLogin = async () => {
     email.value = ''
     password.value = ''
     if (error) {
+      isErrorVisible.value = true;
+      errorMessage.value = error.message;
       throw error
     }
-  } catch (error) {
-    errorMsg.value = error
+  } catch (error: any) {
+    errorMessage.value = error;
+    isErrorVisible.value = true;
     setTimeout(() => {
       errorMsg.value = ''
     }, 3000)
@@ -33,70 +49,51 @@ watchEffect(() => {
 })
 </script>
 <template>
-  <!--<div style="display: flex; align-self: center; justify-content: center; max-width: 400px; margin: 10px;">-->
-  <n-grid :x-gap="12" :cols="3">
-    <n-grid-item>
-    </n-grid-item>
+  <v-card
+    class="mx-auto my-5 p-5 rounded-lg elevation-10"
+    width="350px">
+    <v-form class="pa-5">
+      <v-text-field
+        variant="outlined"
+        clear-icon="fas fa-circle-xmark"
+        clearable
+        prepend-inner-icon="fas fa-user"
+        v-model="email"
+        color="primary"
+        label="Usuario"
+        placeholder="Ingrese su correo">
+      </v-text-field>
+      <v-text-field
+        v-model="password"
+        variant="outlined"
+        :append-inner-icon="isPwdVisibleIcon"
+        color="primary"
+        :type="isPwdVisibleType"
+        label="Contraseña"
+        placeholder="Ingrese su contraseña"
+        @click:append-inner="togglePwdVisibility">
+      </v-text-field>
+      <v-btn
+        class="mt-2"
+        block
+        color="primary"
+        size="x-large"
+        @click="userLogin">
+        Login
+      </v-btn>
+    </v-form>
 
-    <n-grid-item>
-      <n-card bordered>
-        <n-tabs
-          type="line"
-          default-value="signin"
-          size="large"
-          justify-content="space-evenly">
-          <n-tab-pane name="signin" tab="Sign in">
-            <n-form>
-              <n-form-item-row label="Dirección de correo">
-                <n-input
-                  size="large"
-                  placeholder="Ingrese su correo" />
-              </n-form-item-row>
-              <n-form-item-row label="Contraseña">
-                <n-input
-                  size="large"
-                  type="password"
-                  placeholder="Ingrese su contraseña" />
-              </n-form-item-row>
-              <n-button
-                type="primary" 
-                text-color="white"
-                block
-                size="large"
-                @click="userLogin">
-                Login
-                <i class="fa-solid fa-door-open" style="padding-left: 10px;"></i>
-              </n-button>
-            </n-form>
-          </n-tab-pane>
-
-          <n-tab-pane name="signup" tab="Sign up">
-            <n-form>
-              <n-form-item-row label="Username">
-                <n-input size="large" />
-              </n-form-item-row>
-              <n-form-item-row label="Password">
-                <n-input size="large" type="password" />
-              </n-form-item-row>
-              <n-form-item-row label="Reenter Password">
-                <n-input size="large" type="password" />
-              </n-form-item-row>
-              <n-button
-                type="primary" 
-                text-color="white"
-                block
-                size="large"
-                @click="userLogin">
-                Sign Up
-                <i class="fa-solid fa-edit" style="padding-left: 10px;"></i>
-              </n-button>
-            </n-form>
-          </n-tab-pane>
-        </n-tabs>
-      </n-card>
-    </n-grid-item>
-
-    <n-grid-item>
-    </n-grid-item>
-  </n-grid>
+    <v-snackbar
+      v-model="isErrorVisible"
+      color="red">
+      {{ errorMessage }}
+      <template v-slot:actions>
+        <v-btn
+          color="white"
+          variant="text"
+          icon="fas fa-circle-xmark"
+          @click="isErrorVisible = false" />
+      </template>
+    </v-snackbar>
+  </v-card>
 </template>

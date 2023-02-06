@@ -9,36 +9,23 @@ export default defineNuxtConfig({
     '@fortawesome/fontawesome-free/css/solid.css',
     '@fortawesome/fontawesome-free/css/regular.css',
     '@fortawesome/fontawesome-free/css/brands.css',
+    'vuetify/lib/styles/main.sass',
   ],
   build: {
-    transpile:
-      process.env.NODE_ENV === 'production'
-        ? [
-            'naive-ui',
-            'vueuc',
-            '@css-render/vue3-ssr',
-            '@juggle/resize-observer'
-          ]
-        : ['@juggle/resize-observer']
+    transpile: ['vuetify'],
   },
   vite: {
     define: {
       'process.env.DEBUG': false
     },
-    optimizeDeps: {
-      include:
-        process.env.NODE_ENV === 'development'
-          ? ['naive-ui', 'vueuc', 'date-fns-tz/esm/formatInTimeZone']
-          : []
-    }
   },
   runtimeConfig: {
     version: '0.0.1'
   },
   modules: [
     '@nuxtjs/supabase',
-    '@huntersofbook/naive-ui-nuxt',
     '@nuxtjs/google-fonts',
+    '@pinia/nuxt'
   ],
   googleFonts: {
     prefetch: true,
@@ -46,7 +33,8 @@ export default defineNuxtConfig({
     display: 'swap',
     inject: true,
     families: {
-      Inter: true
+      //Inter: true
+      Inter: [500, 600, 700, 800, 900]
     }
   },
   supabase: {
@@ -56,7 +44,7 @@ export default defineNuxtConfig({
   typescript: {
     shim: false
   },
-  naiveUI: {
+  /* naiveUI: {
     themeOverrides: {
       common: {
         primaryColor: "#4f45e4FF",
@@ -65,12 +53,12 @@ export default defineNuxtConfig({
         successColor: "#55c900FF",
         fontFamily: "Inter",
         fontWeight: '500',
-        fontWeightStrong: '600',
+        fontWeightStrong: '800',
         railColor: '#4f45e4FF',
       },
       Switch: {
         railColorActive: '#4f45e4FF',
       }
     }
-  }
+  } */
 })

@@ -1,47 +1,37 @@
 <script setup lang="ts">
-// import 'vfonts/Inter.css'
-import { darkTheme, NConfigProvider } from 'naive-ui'
+import { useTheme } from 'vuetify'
+import { useSystemStore } from '@/stores/system'
+import { MenuOption } from '@/typings/System'
 
-// const client = useSupabaseClient()
-const client = useSupabaseAuthClient()
-const user = useSupabaseUser()
-const drawer = ref(false)
+const client = useSupabaseAuthClient() //useSupabaseClient()
+const user = await useSupabaseUser()
+const theme = useTheme()
+const systemStore = useSystemStore();
 
-const selectedItem = ref(1);
+const supabaseJWT = useCookie('sb-access-token')
 
-const toogleDrawer = () => {
-  drawer.value = !drawer.value
-}
-
-const renderIcon = (iconName: string) => {
-  return () => h('i', { class: iconName })
-}
-
-const drawerWidth = 264;
-const collapsedDrawerWidth = 64;
-const isDarkEnabled = ref(false);
-const menuOptions = computed(() => {
-  let result = [];
-  for (var index = 0; index < 30; index++) {
-    result.push({
-      label: `Menu number ${index}`,
-      key: `key_${index}`,
-      icon: renderIcon('fas fa-home')
-    })
-  }
-  return result;
-});
-
-const changeTheme = () => {
-  isDarkEnabled.value = !isDarkEnabled.value;
-}
-
-const theme = computed(() => {
-  return isDarkEnabled.value ? darkTheme : null;
-})
+const { data, pending, error, refresh } = await useAsyncData(
+  'menuOptions',
+  () => $fetch('/api/system', { headers: { Cookie: `sb-access-token=${supabaseJWT.value}` }})
+)
+const menuOptions = (data as unknown as MenuOption[]);
+systemStore.setMenuOptions(menuOptions)
+const rootMenuOptions = computed(() => {
+  return systemStore.menuOptions?.filter(x => x.parent === null);
+}) 
 
 const userLogout = async () => {
   await client.auth.signOut()
+}
+
+const drawer = ref(true)
+const isDarkEnabled = ref(theme.global.current.value.dark);
+const darkBgColor = computed(() => {
+  return isDarkEnabled.value ? 'bg-grey-darken-3' : 'bg-blue-grey-lighten-5'
+}) 
+const changeTheme = () => {
+  isDarkEnabled.value = !isDarkEnabled.value
+  theme.global.name.value = theme.global.current.value.dark ? 'themeLight' : 'themeDark'
 }
 
 watchEffect(() => {
@@ -56,108 +46,134 @@ definePageMeta({
 </script>
 
 <template>
-<NConfigProvider
-  :theme="theme"
-  >
-  <NGlobalStyle />
-  <n-layout has-sider style="overflow-y: hidden;">
-    <n-layout-sider
-      show-trigger
-      :collapsed="drawer"
-      collapse-mode="width"
-      :collapsed-width="collapsedDrawerWidth"
-      :width="drawerWidth"
-      :native-scrollbar="false"
-      style="height: calc(100vh);"
-      @collapse="toogleDrawer"
-      @expand="toogleDrawer">
+  <v-card>
+    <v-layout>
+      <v-navigation-drawer
+        permanent
+        floating
+        v-model="drawer">
 
-      <div 
-        v-if="!drawer"
-        style="display: flex; align-self: center; justify-content: space-between; height: 35px;">
-        <div>
-          <n-h3 strong style="padding-top: 5px; padding-left: 5px;">
-            Framework
-          </n-h3>
-        </div>
-        <div style="padding-top: 5px; padding-right: 15px;">
-          <n-avatar
-            size="small"
-            src="img/BittIcon.png"
-            :style="{ backgroundColor: 'transparent' }" />
-        </div>
-      </div>
-      <n-text v-if="!drawer" depth="3" style="padding-left: 5px;">
-        {{ user?.email }}
-      </n-text>
-      <hr v-if="!drawer" style="border: 1px solid #f4f5fa;"/>
+        <v-card
+          flat
+          class="mx-auto"
+          width="400">
+          <template v-slot:title>
+            <div class="d-flex flex-row align-center">
+              <v-menu :close-on-content-click="false">
+                <template v-slot:activator="{ props }">
+                  <v-btn
+                    size="small"
+                    flat
+                    :color="isDarkEnabled ? 'grey-darken-3' : 'grey-darken-1'"
+                    icon="fas fa-user"
+                    v-bind="props"></v-btn>
+                </template>
+                <v-card
+                  min-width="300"
+                  :title="user?.email"
+                  :subtitle="user?.id">
+                  <template v-slot:text>
+                    {{ user?.last_sign_in_at }}
+                    <v-btn
+                      block
+                      color="primary"
+                      rounded="0"
+                      size="x-large"
+                      prepend-icon="fas fa-door-open"
+                      @click="changeTheme">
+                      Cambiar Tema
+                    </v-btn>
+                  </template>
+                </v-card>
 
-      <div
-        :style="`overflow-y: auto; height: calc(100vh - ${!drawer ? 117 : 40}px)`">
-        <n-menu
-          :options="menuOptions"
-        />
-      </div>
-
-      <hr v-if="!drawer" style="border: 1px solid #f4f5fa; margin: 1px;"/>
-      <n-tooltip trigger="hover">
-        <template #trigger>
-          <n-button
-            type="primary"
-            text-color="white"
-            size="large"
-            block
-            @click="userLogout">
-            <span v-if="!drawer">Logout</span>
-            <i class="fa-solid fa-door-open" style="padding-left: 10px;"></i>
-          </n-button>
-        </template>
-        Cerrar sesión
-      </n-tooltip>
-    </n-layout-sider>
-    
-    <n-layout 
-      content-style="padding: 24px;"
-      :style="`height: calc(100vh); ${isDarkEnabled?undefined:'background-color: #f4f5fa;'}`">
-      <n-layout-header
-      bordered
-      style="height: 64px">
-      <n-page-header >
-        <div 
-          :style="`height: 64px; padding-left: 1rem; display: flex; align-items: center; ${isDarkEnabled?undefined:'background-color: #f4f5fa;'}`"
-          >
-          <n-space justify="space-between" style="width: 100%;">
-            <div>
-              
+              </v-menu>
+              <div
+                class="pl-2 text-h6 font-weight-black"
+                :class="!isDarkEnabled ? 'text-grey-darken-3' : ''">Framework</div>
             </div>
-            <div>
-              <n-switch
-                v-model:value="isDarkEnabled"
-                size="large"
-                @change="changeTheme"
-                @update:value="changeTheme" />
-            </div>
-          </n-space>
+          </template>
           
-          
-          <n-space horizontal></n-space>
-          
-          
+        </v-card>
+
+        <v-text-field
+          class="ma-2"
+          density="compact"
+          variant="solo"
+          label="Buscar..."
+          append-inner-icon="fas fa-search"
+          single-line
+          hide-details>
+        </v-text-field>
+
+        <v-list
+          class="overflow-y-auto"
+          height="calc(100vh - 168px)">
+
+          <div
+            v-for="item, index in rootMenuOptions">
+            <v-list-subheader>{{ item.name_es }}</v-list-subheader>
+              <v-list-item
+                v-for="(subItem, i) in systemStore.menuOptions?.filter(x => x.parent === item.id)"
+                :key="`${subItem}-${i}`"
+                :value="`${subItem}-${i}`"
+                active-color="primary"
+                :to="subItem.link"
+                variant="plain">
+                <template v-slot:prepend>
+                  <v-icon class="mr-3" size="small" :icon="subItem.icon"></v-icon>
+                </template>
+                <v-list-item-title class="text-subtitle-2"  v-text="`${subItem.name_es}`"></v-list-item-title>
+                <v-tooltip
+                  activator="parent"
+                  location="end">
+                  {{ item.name_es }} - {{ subItem.name_es }}
+                </v-tooltip>
+              </v-list-item>
+              <v-divider v-if="rootMenuOptions && (index + 1) < rootMenuOptions?.length" class="my-5"></v-divider>
+          </div>
+          <br/>
+        </v-list>
+
+        <v-btn
+          block
+          color="primary"
+          rounded="0"
+          size="x-large"
+          prepend-icon="fas fa-door-open"
+          @click="userLogout">
+          Cerrar Sesión
+        </v-btn>
+      </v-navigation-drawer>
+
+      <v-main
+        class="p-5"
+        :class="darkBgColor"
+        style="height: calc(100vh); overflow-y: scroll;">
+        <div class="pa-10">
+          <slot></slot>
+          <v-card
+            title="Card title"
+            subtitle="Subtitle"
+            color="primary"
+            text="...">
+          </v-card>
+          <!--<v-btn @click="loadMenuData">Cargar Datos</v-btn>-->
+          <div class="d-flex flex-row mb-6">
+            <v-card color="secondary" class="ma-2 pa-2" title="Cart title 1" subtitle="subtitle">Flex item 1</v-card>
+            <v-card color="success" class="ma-2 pa-2 text-white" title="Cart title 2" subtitle="subtitle">Flex item 2</v-card>
+            <v-card color="warning" class="ma-2 pa-2 text-white" loading title="Cart title 3" subtitle="subtitle">Flex item 3</v-card>
+            <v-card color="secondary" class="ma-2 pa-2" title="Cart title 4" subtitle="subtitle">Flex item 4</v-card>
+            <v-card color="error" class="ma-2 pa-2" title="Cart title 5" subtitle="subtitle">Flex item 5</v-card>
+          </div>
+          <div
+            v-for="n in 50">
+            {{ n }}
+          </div>
         </div>
-      </n-page-header>
-    </n-layout-header>
-      contenido
-      <n-h2
-        v-for="n in 30" :key="n">
-        Handian Bridge
-      </n-h2>
-    </n-layout>
-  </n-layout>
-</NConfigProvider>
+      </v-main>
+    </v-layout>
+  </v-card>
 </template>
 
 <style scoped>
-.n-card > .n-card__content, .n-card > .n-card__footer {
-  padding: 0px !important;
-}
 </style>
