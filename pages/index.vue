@@ -7,7 +7,7 @@ definePageMeta({
   <div>
     <h1>WELCOME</h1>
     <v-card
-      title="Card title"
+      title="Card title 0"
       subtitle="Subtitle"
       color="primary"
       text="...">
