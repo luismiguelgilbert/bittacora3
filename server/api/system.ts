@@ -1,5 +1,6 @@
 import { serverSupabaseUser } from "#supabase/server";
 import { PrismaClient } from '@prisma/client'
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime";
 import { MenuOption } from "~~/typings/System";
 
 const prisma = new PrismaClient();
@@ -28,12 +29,12 @@ export default defineEventHandler( async (event) => {
     `;
     //const newResults: MenuOption[] = data as MenuOption[];
     return data as MenuOption[];
-  }catch(err) {
+  }catch(err: any) {
     console.error(`Error at ${event.path}. ${err}`);
     
     const error = createError({
       statusCode: 500,
-      statusMessage: `Unhandled exception: ${JSON.stringify(err)}`,
+      statusMessage: `Unhandled exception. Code: ${err.code}. Message: ${err.message}`,
     });
     sendError(event, error, false);
   }
